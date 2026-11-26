@@ -620,8 +620,13 @@ function applyTheme(){
 /* ---------- Text in Absätze umwandeln ---------- */
 function fmtText(t){
   const inline = x => x.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1<i>$2</i>');
-  return String(t||'').replace(/\r/g,'').split(/\n+/).map(x=>x.trim()).filter(Boolean)
-    .map(x=>`<p class="tx">${inline(x)}</p>`).join('');
+  /* poemBlock: Absätze durch Leerzeilen. Besteht ein Absatz nur aus kurzen Zeilen (Gedicht), bleiben die Zeilen eng zusammen. */
+  return String(t||'').replace(/\r/g,'').split(/\n\s*\n/).map(block=>{
+    const lines = block.split('\n').map(x=>x.trim()).filter(Boolean);
+    if(!lines.length) return '';
+    const poem = lines.length > 1 && lines.every(l=> l.length <= 70 && !/^@@BILD\d+@@$/.test(l));
+    return poem ? `<p class="tx">${lines.map(inline).join('<br>')}</p>` : lines.map(x=>`<p class="tx">${inline(x)}</p>`).join('');
+  }).join('');
 }
 
 /* ---------- Großes Lösungswort ---------- */
